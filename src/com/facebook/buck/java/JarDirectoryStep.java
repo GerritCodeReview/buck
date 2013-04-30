@@ -203,7 +203,9 @@ public class JarDirectoryStep implements Step {
         continue;
       }
 
-      jar.putNextEntry(entry);
+      ZipEntry newEntry = new ZipEntry(entry);
+      newEntry.setCompressedSize(-1);
+      jar.putNextEntry(newEntry);
       InputStream inputStream = zip.getInputStream(entry);
       ByteStreams.copy(inputStream, jar);
       jar.closeEntry();
