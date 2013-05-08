@@ -26,6 +26,7 @@ import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleResolver;
 import com.facebook.buck.rules.BuildRuleType;
 import com.facebook.buck.rules.SourcePath;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -42,7 +43,8 @@ public class RobolectricTestRule extends JavaTestRule {
       Optional<String> proguardConfig,
       JavacOptions javacOptions,
       List<String> vmArgs,
-      ImmutableSet<JavaLibraryRule> sourceUnderTest) {
+      ImmutableSet<JavaLibraryRule> sourceUnderTest,
+      Function<String, String> relativeToAbsolutePathFunction) {
     super(buildRuleParams,
         srcs,
         resources,
@@ -50,7 +52,8 @@ public class RobolectricTestRule extends JavaTestRule {
         proguardConfig,
         javacOptions,
         vmArgs,
-        sourceUnderTest);
+        sourceUnderTest,
+        relativeToAbsolutePathFunction);
   }
 
   @Override
@@ -97,7 +100,8 @@ public class RobolectricTestRule extends JavaTestRule {
           proguardConfig,
           javacOptions.build(),
           allVmArgs.build(),
-          sourceUnderTest);
+          sourceUnderTest,
+          relativeToAbsolutePathFunction);
     }
 
     @Override
