@@ -32,10 +32,12 @@ import com.facebook.buck.step.ExecutionContext;
 import com.facebook.buck.step.Step;
 import com.facebook.buck.step.fs.MakeCleanDirectoryStep;
 import com.facebook.buck.util.BuckConstant;
+import com.facebook.buck.util.Functions;
 import com.facebook.buck.util.HumanReadableException;
 import com.facebook.buck.util.ProjectFilesystem;
 import com.facebook.buck.util.ZipFileTraversal;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -68,6 +70,7 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
   private CompiledClassFileFinder compiledClassFileFinder;
 
   private final ImmutableSet<String> labels;
+  private final String tmpDirectory;
 
   protected JavaTestRule(BuildRuleParams buildRuleParams,
       Set<String> srcs,
@@ -76,7 +79,8 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
       Optional<String> proguardConfig,
       JavacOptions javacOptions,
       List<String> vmArgs,
-      ImmutableSet<JavaLibraryRule> sourceUnderTest) {
+      ImmutableSet<JavaLibraryRule> sourceUnderTest,
+      Function<String, String> relativeToAbsolutePathFunction) {
     super(buildRuleParams,
         srcs,
         resources,
@@ -86,6 +90,13 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
     this.vmArgs = ImmutableList.copyOf(vmArgs);
     this.sourceUnderTest = Preconditions.checkNotNull(sourceUnderTest);
     this.labels = ImmutableSet.copyOf(labels);
+
+    String temp = String.format("%s/%s/%s__tmp",
+	        BuckConstant.GEN_DIR,
+	        buildRuleParams.getBuildTarget().getBasePath(),
+	        getBuildTarget().getShortName()
+	        );
+    this.tmpDirectory = relativeToAbsolutePathFunction.apply(temp);
   }
 
   @Override
@@ -144,8 +155,8 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
     ImmutableList.Builder<Step> steps = ImmutableList.builder();
 
     String pathToTestOutput = getPathToTestOutput();
-    MakeCleanDirectoryStep mkdirClean = new MakeCleanDirectoryStep(pathToTestOutput);
-    steps.add(mkdirClean);
+    steps.add(new MakeCleanDirectoryStep(pathToTestOutput));
+    steps.add(new MakeCleanDirectoryStep(tmpDirectory));
 
     // If there are android resources, then compile the uber R.java files and add them to the
     // classpath used to run the test runner.
@@ -168,6 +179,7 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
         testClassNames,
         vmArgs,
         pathToTestOutput,
+        tmpDirectory,
         executionContext.isCodeCoverageEnabled(),
         executionContext.isDebugEnabled());
     steps.add(junit);
@@ -343,6 +355,8 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
     @Nullable protected List<String> vmArgs = ImmutableList.of();
     protected ImmutableSet<String> sourceUnderTestNames = ImmutableSet.of();
     protected ImmutableSet<String> labels = ImmutableSet.of();
+    protected Function<String, String> relativeToAbsolutePathFunction =
+        Functions.RELATIVE_TO_ABSOLUTE_PATH;
 
     protected Builder() {}
 
@@ -360,7 +374,8 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
           proguardConfig,
           javacOptions.build(),
           vmArgs,
-          sourceUnderTest);
+          sourceUnderTest,
+          relativeToAbsolutePathFunction);
     }
 
     @Override
@@ -394,6 +409,13 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
     @Override
     public Builder setLabels(ImmutableSet<String> labels) {
       this.labels = labels;
+      return this;
+    }
+
+    @VisibleForTesting
+    Builder setRelativeToAbsolutePathFunction(
+        Function<String, String> relativeToAbsolutePathFunction) {
+      this.relativeToAbsolutePathFunction = relativeToAbsolutePathFunction;
       return this;
     }
 
