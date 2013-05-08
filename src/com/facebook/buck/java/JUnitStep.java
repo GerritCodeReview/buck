@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
@@ -61,6 +62,8 @@ public class JUnitStep extends ShellStep {
 
   private final boolean isDebugEnabled;
 
+  private final String tmpDirectory;
+
   private final String testRunnerClassesDirectory;
 
   /**
@@ -70,12 +73,14 @@ public class JUnitStep extends ShellStep {
    *     that will be run, as well as an entry for JUnit.
    * @param testClassNames the fully qualified names of the Java tests to run
    * @param directoryForTestResults directory where test results should be written
+   * @param tmpDirectory directory tests can use for local file scratch space.
    */
   public JUnitStep(
       Set<String> classpathEntries,
       Set<String> testClassNames,
       List<String> vmArgs,
       String directoryForTestResults,
+      String tmpDirectory,
       boolean isCodeCoverageEnabled,
       boolean isDebugEnabled) {
     this(classpathEntries,
@@ -84,6 +89,7 @@ public class JUnitStep extends ShellStep {
         directoryForTestResults,
         isCodeCoverageEnabled,
         isDebugEnabled,
+        tmpDirectory,
         System.getProperty("buck.testrunner_classes",
             new File("build/testrunner/classes").getAbsolutePath()));
   }
@@ -96,6 +102,7 @@ public class JUnitStep extends ShellStep {
       String directoryForTestResults,
       boolean isCodeCoverageEnabled,
       boolean isDebugEnabled,
+      String tmpDirectory,
       String testRunnerClassesDirectory) {
     this.classpathEntries = ImmutableSet.copyOf(classpathEntries);
     this.testClassNames = ImmutableSet.copyOf(testClassNames);
@@ -103,6 +110,7 @@ public class JUnitStep extends ShellStep {
     this.directoryForTestResults = Preconditions.checkNotNull(directoryForTestResults);
     this.isCodeCoverageEnabled = isCodeCoverageEnabled;
     this.isDebugEnabled = isDebugEnabled;
+    this.tmpDirectory = tmpDirectory;
     this.testRunnerClassesDirectory = Preconditions.checkNotNull(testRunnerClassesDirectory);
   }
 
@@ -115,6 +123,7 @@ public class JUnitStep extends ShellStep {
   protected ImmutableList<String> getShellCommandInternal(ExecutionContext context) {
     ImmutableList.Builder<String> args = ImmutableList.builder();
     args.add("java");
+    args.add(String.format("-Djava.io.tmpdir=%s", tmpDirectory));
 
     // Add the output property for EMMA so if the classes are instrumented, coverage.ec will be
     // placed in the EMMA output folder.
@@ -179,6 +188,13 @@ public class JUnitStep extends ShellStep {
     }
 
     return args.build();
+  }
+
+  @Override
+  public ImmutableMap<String, String> getEnvironmentVariables(ExecutionContext context) {
+	ImmutableMap.Builder<String, String> env = ImmutableMap.builder();
+	env.put("TMP", tmpDirectory);
+	return env.build();
   }
 
   private void warnUser(ExecutionContext context, String message) {
