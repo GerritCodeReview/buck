@@ -22,9 +22,11 @@ import com.facebook.buck.shell.ExecutionContext;
 import com.facebook.buck.shell.JUnitCommand;
 import com.facebook.buck.command.io.MakeCleanDirectoryCommand;
 import com.facebook.buck.util.BuckConstant;
+import com.facebook.buck.util.Functions;
 import com.facebook.buck.util.HumanReadableException;
 import com.facebook.buck.util.ZipFileTraversal;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -58,6 +60,8 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
 
   private final ImmutableSet<String> labels;
 
+  private final String tmpDirectory;
+
   protected JavaTestRule(BuildRuleParams buildRuleParams,
       Set<String> srcs,
       Set<String> resources,
@@ -67,7 +71,8 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
       List<String> vmArgs,
       ImmutableSet<JavaLibraryRule> sourceUnderTest,
       String sourceLevel,
-      String targetLevel) {
+      String targetLevel,
+      Function<String, String> relativeToAbsolutePathFunction) {
     super(buildRuleParams,
         srcs,
         resources,
@@ -78,6 +83,13 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
     this.vmArgs = ImmutableList.copyOf(vmArgs);
     this.sourceUnderTest = Preconditions.checkNotNull(sourceUnderTest);
     this.labels = ImmutableSet.copyOf(labels);
+
+    String temp = String.format("%s/%s/%s__tmp",
+	        BuckConstant.GEN_DIR,
+	        buildRuleParams.getBuildTarget().getBasePath(),
+	        getBuildTarget().getShortName()
+	        );
+    this.tmpDirectory = relativeToAbsolutePathFunction.apply(temp);
   }
 
   @Override
@@ -158,8 +170,8 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
     ImmutableList.Builder<Command> commands = ImmutableList.builder();
 
     String pathToTestOutput = getPathToTestOutput();
-    MakeCleanDirectoryCommand mkdirClean = new MakeCleanDirectoryCommand(pathToTestOutput);
-    commands.add(mkdirClean);
+    commands.add(new MakeCleanDirectoryCommand(pathToTestOutput));
+    commands.add(new MakeCleanDirectoryCommand(tmpDirectory));
 
     // If there are android resources, then compile the uber R.java files and add them to the
     // classpath used to run the test runner.
@@ -182,6 +194,7 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
         testClassNames,
         vmArgs,
         pathToTestOutput,
+        tmpDirectory,
         executionContext.isCodeCoverageEnabled,
         executionContext.isDebugEnabled);
     commands.add(junit);
@@ -355,6 +368,8 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
     @Nullable protected List<String> vmArgs = ImmutableList.of();
     protected ImmutableSet<String> sourceUnderTestNames = ImmutableSet.of();
     protected ImmutableSet<String> labels = ImmutableSet.of();
+    protected Function<String, String> relativeToAbsolutePathFunction =
+        Functions.RELATIVE_TO_ABSOLUTE_PATH;
 
     protected Builder() {}
 
@@ -371,7 +386,8 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
           vmArgs,
           sourceUnderTest,
           sourceLevel,
-          targetLevel);
+          targetLevel,
+          relativeToAbsolutePathFunction);
     }
 
     @Override
@@ -405,6 +421,13 @@ public class JavaTestRule extends DefaultJavaLibraryRule implements TestRule {
     @Override
     public Builder setLabels(ImmutableSet<String> labels) {
       this.labels = labels;
+      return this;
+    }
+
+    @VisibleForTesting
+    Builder setRelativeToAbsolutePathFunction(
+        Function<String, String> relativeToAbsolutePathFunction) {
+      this.relativeToAbsolutePathFunction = relativeToAbsolutePathFunction;
       return this;
     }
 

@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
@@ -58,6 +59,8 @@ public class JUnitCommand extends ShellCommand {
 
   private final boolean isDebugEnabled;
 
+  private final String tmpDirectory;
+
   private final String testRunnerClassesDirectory;
 
   /**
@@ -67,12 +70,14 @@ public class JUnitCommand extends ShellCommand {
    *     that will be run, as well as an entry for JUnit.
    * @param testClassNames the fully qualified names of the Java tests to run
    * @param directoryForTestResults directory where test results should be written
+   * @param tmpDirectory directory tests can use for local file scratch space.
    */
   public JUnitCommand(
       Set<String> classpathEntries,
       Set<String> testClassNames,
       List<String> vmArgs,
       String directoryForTestResults,
+      String tmpDirectory,
       boolean isCodeCoverageEnabled,
       boolean isDebugEnabled) {
     this(classpathEntries,
@@ -81,6 +86,7 @@ public class JUnitCommand extends ShellCommand {
         directoryForTestResults,
         isCodeCoverageEnabled,
         isDebugEnabled,
+        tmpDirectory,
         System.getProperty("buck.testrunner_classes"));
   }
 
@@ -92,6 +98,7 @@ public class JUnitCommand extends ShellCommand {
       String directoryForTestResults,
       boolean isCodeCoverageEnabled,
       boolean isDebugEnabled,
+      String tmpDirectory,
       String testRunnerClassesDirectory) {
     this.classpathEntries = ImmutableSet.copyOf(classpathEntries);
     this.testClassNames = ImmutableSet.copyOf(testClassNames);
@@ -99,6 +106,7 @@ public class JUnitCommand extends ShellCommand {
     this.directoryForTestResults = Preconditions.checkNotNull(directoryForTestResults);
     this.isCodeCoverageEnabled = isCodeCoverageEnabled;
     this.isDebugEnabled = isDebugEnabled;
+    this.tmpDirectory = tmpDirectory;
     this.testRunnerClassesDirectory = Preconditions.checkNotNull(testRunnerClassesDirectory);
   }
 
@@ -111,6 +119,7 @@ public class JUnitCommand extends ShellCommand {
   protected ImmutableList<String> getShellCommandInternal(ExecutionContext context) {
     ImmutableList.Builder<String> args = ImmutableList.builder();
     args.add("java");
+    args.add(String.format("-Djava.io.tmpdir=%s", tmpDirectory));
 
     // Add the output property for EMMA so if the classes are instrumented, coverage.ec will be
     // placed in the EMMA output folder.
@@ -172,6 +181,13 @@ public class JUnitCommand extends ShellCommand {
     }
 
     return args.build();
+  }
+
+  @Override
+  public ImmutableMap<String, String> getEnvironmentVariables() {
+	ImmutableMap.Builder<String, String> env = ImmutableMap.builder();
+	env.put("TMP", tmpDirectory);
+	return env.build();
   }
 
   private void warnUser(ExecutionContext context, String message) {

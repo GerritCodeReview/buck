@@ -50,6 +50,7 @@ public class JUnitCommandTest {
     List<String> vmArgs = ImmutableList.of(vmArg1, vmArg2);
 
     String directoryForTestResults = "buck-gen/theresults/";
+    String directoryForTemp = "buck-gen/thetmp/";
     boolean isCodeCoverageEnabled = false;
     boolean isDebugEnabled = false;
     String testRunnerClassesDirectory = "build/classes/junit";
@@ -61,6 +62,7 @@ public class JUnitCommandTest {
         directoryForTestResults,
         isCodeCoverageEnabled,
         isDebugEnabled,
+        directoryForTemp,
         testRunnerClassesDirectory);
 
     ExecutionContext executionContext = EasyMock.createMock(ExecutionContext.class);
@@ -73,6 +75,7 @@ public class JUnitCommandTest {
     MoreAsserts.assertListEquals(
         ImmutableList.of(
             "java",
+            "-Djava.io.tmpdir=" + directoryForTemp,
             vmArg1,
             vmArg2,
             "-verbose",
@@ -100,6 +103,7 @@ public class JUnitCommandTest {
     List<String> vmArgs = ImmutableList.of(vmArg1, vmArg2);
 
     String directoryForTestResults = "buck-gen/theresults/";
+    String directoryForTemp = "buck-gen/thetmp/";
     boolean isCodeCoverageEnabled = false;
     boolean isDebugEnabled = true;
     String testRunnerClassesDirectory = "build/classes/junit";
@@ -111,6 +115,7 @@ public class JUnitCommandTest {
         directoryForTestResults,
         isCodeCoverageEnabled,
         isDebugEnabled,
+        directoryForTemp,
         testRunnerClassesDirectory);
 
 
@@ -133,6 +138,7 @@ public class JUnitCommandTest {
     MoreAsserts.assertListEquals(
         ImmutableList.of(
             "java",
+            "-Djava.io.tmpdir=" + directoryForTemp,
             "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005",
             vmArg1,
             vmArg2,

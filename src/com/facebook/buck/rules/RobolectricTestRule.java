@@ -15,6 +15,7 @@
  */
 package com.facebook.buck.rules;
 
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -34,7 +35,8 @@ public class RobolectricTestRule extends JavaTestRule {
       List<String> vmArgs,
       ImmutableSet<JavaLibraryRule> sourceUnderTest,
       String sourceLevel,
-      String targetLevel) {
+      String targetLevel,
+      Function<String, String> relativeToAbsolutePathFunction) {
     super(buildRuleParams,
         srcs,
         resources,
@@ -44,7 +46,8 @@ public class RobolectricTestRule extends JavaTestRule {
         vmArgs,
         sourceUnderTest,
         sourceLevel,
-        targetLevel);
+        targetLevel,
+        relativeToAbsolutePathFunction);
   }
 
   @Override
@@ -87,7 +90,8 @@ public class RobolectricTestRule extends JavaTestRule {
           allVmArgs.build(),
           sourceUnderTest,
           sourceLevel,
-          targetLevel);
+          targetLevel,
+          relativeToAbsolutePathFunction);
     }
 
   }
