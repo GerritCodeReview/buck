@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -156,15 +157,23 @@ public class JavaBinaryRule extends AbstractCachingBuildRule implements BinaryBu
 
   @Override
   public String getExecutableCommand() {
+    return getExecutableCommand(Collections.<String>emptyList());
+  }
+
+  public String getExecutableCommand(List<String> jvmArgs) {
     Preconditions.checkState(mainClass != null,
         "Must specify a main class for %s in order to to run it.",
         getBuildTarget().getFullyQualifiedName());
-
-    return String.format("java -classpath %s %s",
+    StringBuilder cmd = new StringBuilder();
+    cmd.append("java");
+    if (!jvmArgs.isEmpty()) {
+      cmd.append(' ').append(Joiner.on(' ').join(jvmArgs));
+    }
+    return cmd.append(String.format(" -classpath %s %s",
         Joiner.on(':').join(Iterables.transform(
             getTransitiveClasspathEntries().values(),
             Functions.RELATIVE_TO_ABSOLUTE_PATH)),
-        mainClass);
+        mainClass)).toString();
   }
 
   public static class Builder extends AbstractBuildRuleBuilder {
