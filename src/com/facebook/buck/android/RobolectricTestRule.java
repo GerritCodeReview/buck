@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
+
 package com.facebook.buck.android;
 
 import com.facebook.buck.rules.AnnotationProcessingParams;
@@ -22,6 +23,8 @@ import com.facebook.buck.rules.BuildRuleParams;
 import com.facebook.buck.rules.BuildRuleType;
 import com.facebook.buck.rules.JavaLibraryRule;
 import com.facebook.buck.rules.JavaTestRule;
+
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -41,7 +44,8 @@ public class RobolectricTestRule extends JavaTestRule {
       List<String> vmArgs,
       ImmutableSet<JavaLibraryRule> sourceUnderTest,
       String sourceLevel,
-      String targetLevel) {
+      String targetLevel,
+      Function<String, String> relativeToAbsolutePathFunction) {
     super(buildRuleParams,
         srcs,
         resources,
@@ -51,7 +55,8 @@ public class RobolectricTestRule extends JavaTestRule {
         vmArgs,
         sourceUnderTest,
         sourceLevel,
-        targetLevel);
+        targetLevel,
+        relativeToAbsolutePathFunction);
   }
 
   @Override
@@ -94,7 +99,8 @@ public class RobolectricTestRule extends JavaTestRule {
           allVmArgs.build(),
           sourceUnderTest,
           sourceLevel,
-          targetLevel);
+          targetLevel,
+          relativeToAbsolutePathFunction);
     }
 
   }
