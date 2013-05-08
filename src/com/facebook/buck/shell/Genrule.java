@@ -16,6 +16,7 @@
 
 package com.facebook.buck.shell;
 
+import com.facebook.buck.java.JavaBinaryRule;
 import com.facebook.buck.model.BuildTarget;
 import com.facebook.buck.rules.AbstractCachingBuildRule;
 import com.facebook.buck.rules.AbstractCachingBuildRuleBuilder;
@@ -341,10 +342,18 @@ public class Genrule extends AbstractCachingBuildRule {
             buildTarget, cmd, getType().getDisplayName(), getFullyQualifiedName());
       }
       BinaryBuildRule binaryBuildRule = (BinaryBuildRule)matchingRule;
+      String bincmd;
+      if (binaryBuildRule instanceof JavaBinaryRule) {
+        List<String> jvmArgs = Lists.newArrayListWithCapacity(4);
+        jvmArgs.add(String.format("-Djava.io.tmpdir=%s", tmpDirectory));
+        bincmd = ((JavaBinaryRule)binaryBuildRule).getExecutableCommand(jvmArgs);
+      } else {
+        bincmd = binaryBuildRule.getExecutableCommand();
+      }
 
       // Note that matcher.group(1) is the non-backslash character that did not escape the dollar
       // sign, so we make sure that it does not get lost during the regex replacement.
-      String replacement = matcher.group(1) + binaryBuildRule.getExecutableCommand();
+      String replacement = matcher.group(1) + bincmd;
       matcher.appendReplacement(buffer, replacement);
     }
     matcher.appendTail(buffer);
