@@ -16,6 +16,7 @@
 
 package com.facebook.buck.shell;
 
+import com.facebook.buck.java.JavaBinaryRule;
 import com.facebook.buck.model.BuildTarget;
 import com.facebook.buck.rules.AbstractBuildRuleBuilder;
 import com.facebook.buck.rules.AbstractBuildRuleBuilderParams;
