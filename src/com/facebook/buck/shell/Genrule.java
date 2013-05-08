@@ -16,6 +16,7 @@
 
 package com.facebook.buck.shell;
 
+import com.facebook.buck.java.JavaBinaryRule;
 import com.facebook.buck.model.BuildTarget;
 import com.facebook.buck.rules.AbstractBuildRuleBuilder;
 import com.facebook.buck.rules.AbstractBuildRuleBuilderParams;
@@ -412,7 +413,14 @@ public class Genrule extends AbstractCachingBuildRule {
       String cmd,
       BuildRule matchingRule) {
     if (matchingRule instanceof BinaryBuildRule) {
-      return ((BinaryBuildRule) matchingRule).getExecutableCommand(filesystem);
+      BinaryBuildRule binaryBuildRule = (BinaryBuildRule) matchingRule;
+      if (binaryBuildRule instanceof JavaBinaryRule) {
+        List<String> jvmArgs = Lists.newArrayListWithCapacity(4);
+        jvmArgs.add(String.format("-Djava.io.tmpdir=%s", pathToTmpDirectory));
+        return ((JavaBinaryRule) binaryBuildRule).getExecutableCommand(filesystem, jvmArgs);
+      } else {
+        return binaryBuildRule.getExecutableCommand(filesystem);
+      }
     }
 
     File output = filesystem.getFileForRelativePath(matchingRule.getPathToOutputFile());
