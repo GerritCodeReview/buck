@@ -259,7 +259,7 @@ public class Genrule extends AbstractCachingBuildRule {
       @Override
       protected ImmutableList<String> getShellCommandInternal(ExecutionContext context) {
         buildCmd(context.getProjectFilesystem(), cmd);
-        return ImmutableList.of("/bin/bash", "-c", command);
+        return ImmutableList.of("/bin/bash", "-ec", command);
       }
 
       @Override
