@@ -237,7 +237,7 @@ public class Genrule extends AbstractCachingBuildRule {
 
     // Create a shell command that corresponds to this.cmd.
     final String cmd = replaceBinaryBuildRuleRefsInCmd();
-    final ImmutableList<String> commandArgs = ImmutableList.of("/bin/bash", "-c", cmd);
+    final ImmutableList<String> commandArgs = ImmutableList.of("/bin/bash", "-ec", cmd);
     ImmutableMap.Builder<String, String> environmentVariablesBuilder = ImmutableMap.builder();
 
     addEnvironmentVariables(environmentVariablesBuilder);
