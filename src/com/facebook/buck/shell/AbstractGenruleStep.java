@@ -129,7 +129,7 @@ public abstract class AbstractGenruleStep extends ShellStep {
             getFullyQualifiedName());
       }
       command = replaceMatches(context.getProjectFilesystem(), commandInUse);
-      return ImmutableList.of("/bin/bash", "-c", command);
+      return ImmutableList.of("/bin/bash", "-ec", command);
     }
   }
 
