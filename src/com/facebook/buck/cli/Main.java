@@ -585,7 +585,7 @@ public final class Main {
   }
 
   private void runMainThenExit(String[] args, Optional<NGContext> context) {
-    File projectRoot = new File(".");
+    File projectRoot = new File("").getAbsoluteFile();
     int exitCode = FAIL_EXIT_CODE;
     try {
       exitCode = tryRunMainWithExitCode(projectRoot, context, args);
