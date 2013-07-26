@@ -89,7 +89,6 @@
            >
       <compilerarg value="-Xlint:rawtypes" />
       <compilerarg value="-Xlint:unchecked" />
-      <compilerarg value="-Werror" />
     </javac>
   </target>
 
@@ -102,7 +101,6 @@
            >
       <compilerarg value="-Xlint:rawtypes" />
       <compilerarg value="-Xlint:unchecked" />
-      <compilerarg value="-Werror" />
     </javac>
   </target>
 
@@ -123,7 +121,6 @@
       <exclude name="com/facebook/buck/java/abi/**" />
       <compilerarg value="-Xlint:rawtypes" />
       <compilerarg value="-Xlint:unchecked" />
-      <compilerarg value="-Werror" />
     </javac>
   </target>
 
@@ -174,7 +171,6 @@
            >
       <compilerarg value="-Xlint:rawtypes" />
       <compilerarg value="-Xlint:unchecked" />
-      <compilerarg value="-Werror" />
     </javac>
   </target>
 
