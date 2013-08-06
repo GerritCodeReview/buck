@@ -16,20 +16,6 @@
 
 package com.facebook.buck.java;
 
-import com.facebook.buck.step.ExecutionContext;
-import com.facebook.buck.step.Step;
-import com.facebook.buck.util.DirectoryTraversal;
-import com.facebook.buck.util.ProjectFilesystem;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Closeables;
-import com.google.common.io.Closer;
-import com.google.common.io.Files;
-
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,9 +33,24 @@ import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import javax.annotation.Nullable;
+
+import com.facebook.buck.step.ExecutionContext;
+import com.facebook.buck.step.Step;
+import com.facebook.buck.util.DirectoryTraversal;
+import com.facebook.buck.util.ProjectFilesystem;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
+import com.google.common.io.Closer;
+import com.google.common.io.Files;
 
 /**
  * Creates a JAR file from a collection of directories/ZIP/JAR files.
@@ -207,7 +208,13 @@ public class JarDirectoryStep implements Step {
 
       ZipEntry newEntry = new ZipEntry(entry);
       newEntry.setCompressedSize(-1);
-      jar.putNextEntry(newEntry);
+      try {
+        jar.putNextEntry(newEntry);
+      } catch (ZipException ze) {
+        throw new ZipException(String.format(
+          "%s from %s",
+          ze.getMessage(), file.getPath()));
+      }
       InputStream inputStream = zip.getInputStream(entry);
       ByteStreams.copy(inputStream, jar);
       jar.closeEntry();
